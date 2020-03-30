@@ -445,6 +445,69 @@ fun List<Int>.average(): Double { ... }
 fun List<Double>.average(): Double { ... }
 ```
 
+
+
+
+## Library functions looking like built-in constructs
+
+All these functions are declared as `inline` functions - no performance overhead when you use these, no anonymous class or extra objects are created for lambda under the hood:
+
+- `run`
+- `let`
+- `takeIf`
+- `takeUnless`
+- `repeat`
+- `withLock`
+- `use`
+
+_Don't optimise prematurely!_
+
+## Collections
+
+Extensions on collections are inlined:
+- `filter`
+- `map`
+- `any`
+- `find`
+- `groupBy`
+
+Operations on collections:
+- Lambdas are inlined (**no performance overhead**)
+- but **intermediate collections** are created for chained calls
+
+## Sequences
+
+`asSequence()`
+
+## Collections vs Sequences
+
+| Operations on Collections                             | Operations on Sequences |
+| ----------------------------------------------------- | ----------------------- |
+| **eager** evaluation                                  | **lazy** evaluation     |
+| horizontal evaluation                                 | vertical evaluation     |
+| intermediate collections are created on chained calls | lambda are not inlined  |
+
+
+## Lambda with Receiver
+
+## Types
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ----------------------------------------------------------------------
 
 # II. [Kotlin Koans](https://kotlinlang.org/docs/tutorials/koans.html)
