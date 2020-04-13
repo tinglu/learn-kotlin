@@ -1,6 +1,4 @@
- # I. Kotlin
-
-_Lisa's Notes_
+_Lisa's Notes of Learning Kotlin_
 
 # [Kotlin for Java Developers Coursera](https://www.coursera.org/learn/kotlin-for-java-developers/)
 
@@ -33,11 +31,189 @@ fun other() {
 }
 ```
 
-### Extensions
+## Extensions
 
 - `Extensions` are **static** Java functions under the hood,
 - so no **override** for extension functions in Kotlin.
 - member function wins over extension
+
+
+
+## Nullability
+
+### Nullability operators
+
+`elvis operator` (`?:`)
+```kotlin
+val s: String?
+val length: Int = if (s != null) s.length else 0
+// ==> same as
+val length: Int = s?.length ?: 0
+```
+
+Not-null assertion `!!`
+```kotlin
+val s: String?
+s!! // throws NPE if s is null
+```
+
+
+**Prefer safe access `?.`, elvis operator `?:`, `if-checks` over not-null operator `!!`**
+
+
+### Optional types
+
+**Optional type is a wrapper that stores the reference to the initial object. For each optional value, an extra object is created.**
+
+```kotlin
+class Optional<T>(val value: T) {
+    fun isPresent() = value != null
+    fun get() = value ?: throw NoSuchElementException("No value present")
+}
+```
+
+
+
+### Nullable types under the hood
+
+**Only one object at runtime. No wrapper created. Implemented by annotations.**
+
+```kotlin
+fun foo(): String = "foo"
+fun bar(): String? = "bar"
+
+// ===> under the hood:
+@NotNull
+public static final String foo() {
+    return "foo";
+}
+@Nullable
+public static final String bar() {
+    return "bar";
+}
+```
+
+
+### Type cast
+
+- type cast: `as`
+- safe cast: `as?`
+
+
+
+
+
+
+
+
+## Functional Programming
+
+
+### Lambda syntax
+
+```kotlin
+// e.g. full syntax
+list.any({ i: Int -> i > 0 })
+// the lambda can be moved out of the parentheses when it is the last argument
+list.any() { i: Int -> i > 0 }
+// the parentheses can be omitted if it is empty
+list.any { i: Int -> i > 0 }
+// type can be omitted if it's clear from the context
+list.any { i -> i > 0 }
+// **it** denotes the argument if it's the only one
+list.any { it > 0 }
+```
+
+#### multi-line lambda
+```kotlin
+list.any {
+    println("processing $it")
+    it > 0 // the last expression is the result
+}
+```
+
+#### Destructuring declarations
+```kotlin
+// e.g.
+map.mapValues { entry -> "${entry.key} -> ${entry.value}" }
+// use destructuring declarations syntax instead
+map.mapValues { (key, value) -> "$key -> $value" }
+// omit the parameter name if it's unused
+map.mapValues { (_, value) -> "$value" }
+```
+
+
+### Common operations on collections
+
+- filter
+- map
+- any / all / none
+- find / first / firstOrNull (they do the same thing)
+- count
+- partition
+- groupBy
+- associateBy (duplicates will be removed & only the LAST element is chosen!)
+- associate
+- zip (remaining elements from the longer list will be ignored)
+- zipWithNext `listOf(1,2,3,4...).zipWithNext() --> listOf((1,2), (2,3), (3,4)...)`
+- flatten
+- flatMap (combines two operations `map` & `flatten`)
+- reduce
+- groupBy
+- ...
+
+
+### Simplifying code
+
+- don't use `it` if it has different types in neighboring lines (only use `it` if the lambda is trivial and straightforward)
+- prefer explicit parameter names if it might be confusing otherwise
+- learn the library and try to reuse the library functions as much as possible
+
+
+
+### Function types
+
+#### Calling lambda directly
+
+```kotlin
+{ println("hey!") }() // possible but strange
+run { println("hey!") } // use **run** instead
+```
+
+#### Function types and nullability
+
+- `() -> Int?`: return type is nullable
+- `(() -> Int)?`: the variable is nullable
+
+```kotlin
+val f1: () -> Int? = null // (x) NOT compile
+val f2: () -> Int? = { null } // a lambda without arguments that always returns null
+val f3: (() -> Int?) = null // either lambda returning Int or null reference
+val f4: (() -> Int?) = { null } // (x) NOT compile
+```
+
+#### Working with a nullable function type
+
+```kotlin
+val f3: (() -> Int?) = null
+
+if (f3 != null) {
+    f3()
+}
+// OR
+f3?.invoke()
+```
+
+
+### Member references
+
+
+
+
+
+
+
+
 
 ## Properties
 
