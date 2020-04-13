@@ -207,11 +207,157 @@ f3?.invoke()
 
 ### Member references
 
+```kotlin
+class Person(val name: String, val age: Int)
+people.maxBy { it.age } // convert lambda to reference
+people.maxBy(Person::age) // Class::member
+```
+
+- You can store lambda in a variable but you can't store a function in a variable:
+```kotlin
+val isEven: (Int) -> Boolean = { i: Int -> i % 2 == 0 } // OK
+
+fun isEven(i: Int): Boolean = i % 2 == 0
+val predicate = isEven // COMPILER ERROR!
+val predicate = ::isEven // OK - use function reference
+val predicate = { i: Int -> isEven(i) } // OK
+```
+
+- If the function called inside a lambda only takes 0 or 1 argument, then explicit function call in a lambda is more concise than using member references. But when the lambda has multiple parameters, and the function called takes the same parameters in the same order, then **member references allow you to hide all the parameters because the compiler can infer the types**:
+```kotlin
+val action = { person: Person, message: String ->
+    sendEmail(person, message)
+}
+
+val action = ::sendEmail // More concise in this case
+```
 
 
+- You can pass function reference as an argument:
+```kotlin
+fun isEven(i: Int): Boolean = i % 2 == 0
+
+val list = listOf(1,2,3,4)
+list.any(::isEven)
+list.filter(::isEvent)
+```
+
+- `Bound` vs. `Non-bound` reference
+```kotlin
+class Person(val name: String, val age: Int) {
+    fun isOlder(ageLimit: Int) = age > ageLimit
+}
+
+// Non-bound reference
+val agePredicate = Person::isOlder
+// because the full function is:
+val agePredicate: (Person, Int) -> Boolean = { person, ageLimit ->
+    person.isOlder(ageLimit)
+}
+val alice = Person("Alice", 29)
+agePredicate(alice, 21) // true
+
+// Bound reference
+val alice = Person("Alice", 29)
+val agePredicate = alice::isOlder // bound to this specific instance
+// the full function is:
+val agePredicate: (Int) -> Boolean = { ageLimit ->
+    alice.isOlder(ageLimit)
+}
+agePredicate(21) // true
+```
+
+- Bound to `this` reference
+```kotlin
+class Person(val name: String, val age: Int) {
+    fun isOlder(ageLimit: Int) = age > ageLimit
+
+    fun getAgePredicate() = this::isOlder // bound to this instance
+    fun getAgePredicate() = ::isOlder // this can be omitted
+}
+```
+
+- a function reference without left handside is either a **global** reference or a **bound** reference
+```kotlin
+fun isEven(i: Int): Boolean = i % 2 == 0
+
+val list = listOf(1,2,3,4)
+list.any(::isEven) // reference to a global function
+list.filter(::isEvent)
+```
+
+### Return from lambda
+
+`return` in Kotlin always return from a function marked with `fun`:
+```kotlin
+fun duplicateNonZero(list: List<Int>): List<Int> {
+    return list.flatMap {
+        if (it == 0) return listOf() // return from duplicateNonZero fun!
+        listOf(it, it)
+    }
+}
+println(duplicateNonZero(listOf(3,0,5))) // []
+```
+
+- `return` from lambda using **annotation**
+```kotlin
+// won't break the outer function
+fun duplicateNonZero(list: List<Int>): List<Int> {
+    list.flatMap{
+        if (it == 0) return@flatMap listOf<Int>()
+        listOf(it, it)
+    }
+}
+// same as
+fun duplicateNonZero(list: List<Int>): List<Int> {
+    list.flatMap l@{
+        if (it == 0) return@l listOf<Int>()
+        listOf(it, it)
+    }
+}
+```
+
+- `return` using **local function**
+```kotlin
+fun duplicateNonZero(list: List<Int>): List<Int> {
+    fun duplicateNonZeroElement(e: Int): List<Int> {
+        if (e == 0) return listOf()
+        return listOf(e, e)
+    }
+    return list.flatMap(::duplicateNonZeroElement)
+}
+println(duplicateNonZero(listOf(3,0,5))) // [3,3,5,5]
+```
+
+- `return` using **anonymous function**
+```kotlin
+fun duplicateNonZero(list: List<Int>): List<Int> {
+    return list.flatMap(fun (e): List<Int> { // can specify type List<Int> which is not possible using lambda
+        if (e == 0) return listOf() // will only return from the anonymous function
+        return listOf(e, e)
+    })
+}
+println(duplicateNonZero(listOf(3,0,5))) // [3,3,5,5]
+```
+
+- NOT using `return`
+```kotlin
+fun duplicateNonZero(list: List<Int>): List<Int> {
+    return list.flatMap {
+        if (it == 0)
+            listOf()
+        else
+            listOf(it, it)
+    }
+}
+println(duplicateNonZero(listOf(3,0,5))) // [3,3,5,5]
+```
 
 
+## Kotlin is a not a purely functional language
 
+- it combines different paradigms
+- if you reply on immutability, higher-order functions, lambdas, function types, you're doing Kotlin in the functional style
 
 
 
