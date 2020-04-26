@@ -784,7 +784,6 @@ All these functions are declared as `inline` functions - no performance overhead
 
 _Don't optimise prematurely!_
 
-
 ### Comparison of `run`, `with`, `let`, `also` and `apply`
 
 // TODO
@@ -792,24 +791,27 @@ _Don't optimise prematurely!_
 - this vs. it
 - how to return
 
+
+`@InlineOnly` specifies the function should not be called directly without inlining:
+```kotlin
+@kotlin.internal.InlineOnly
+public inline fun <R> run(block: () -> R): R = block()
+```
+
+
 ## Collections vs. Sequences
 
 ### Collections
 
-Extensions on collections are inlined:
-- `filter`
-- `map`
-- `any`
-- `find`
-- `groupBy`
-
 Operations on collections:
-- Lambdas are inlined (**no performance overhead**)
-- but **intermediate collections** are created for chained calls
+- Lambdas are inlined (**no performance overhead**): `filter`, `map`, `any`, `find`, `groupBy`
+- but **intermediate collections** are created for chained calls (**significant performance overhead** if not simple situation), i.e. `intermediate operations` return new collections as a result: `filter`, `map`, `groupBy`
 
 ### Sequences
 
-`asSequence()`
+`asSequence()` - from list to sequence
+
+- Lambdas are **NOT** inlined
 
 ### Collections vs Sequences
 
@@ -818,6 +820,11 @@ Operations on collections:
 | **eager** evaluation                                  | **lazy** evaluation     |
 | horizontal evaluation                                 | vertical evaluation     |
 | intermediate collections are created on chained calls | lambda are not inlined  |
+
+### Creating sequences
+
+
+
 
 
 ## Lambda with Receiver
