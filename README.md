@@ -406,9 +406,9 @@ lateinit var myData: MyData
 | Modifier  | Class member          | Top-level declaration |
 | --------- | --------------------- | --------------------- |
 | public    | visible everywhere    | visible everywhere    |
-| internal  | visible in teh module | visible in teh module |
+| internal  | visible in the module | visible in the module |
 | protected | visible in subclasses | ---                   |
-| private   | visible in teh class  | visible in the file   |
+| private   | visible in the class  | visible in the file   |
 
 | Kotlin modifier | JVM level                 |
 | --------------- | ------------------------- |
@@ -466,9 +466,9 @@ fun main() {
 ```
 
 
-## Class modifiers
+### Class modifiers
 
-### data class
+#### data class
 
 `data` modifier generates useful methods: `euqals`, `hashCode`, `copy`, `toString`, etc.
 
@@ -513,7 +513,7 @@ println(user1 == user2) // true!
 ```
 
 
-### Class hierarchy
+#### Class hierarchy
 
 ```kotlin
 interface Expr
@@ -528,7 +528,7 @@ fun eval(e: Expr): Int = when (e) {
 ```
 
 `sealed` class can solve the exhaustive problem - it restricts class hierarchy:
-- all subclasses must be located in the same file
+- **all subclasses must be located in the same file**
 - `sealed` class has a **private default constructor** so it won't accidentally instantiate this class from Java or create subclasses
 ```kotlin
 sealed class Expr
@@ -542,7 +542,7 @@ fun eval(e: Expr): Int = when (e) {
 }
 ```
 
-### Nested and Inner classes
+#### Nested and Inner classes
 
 Which class(nested or inner) stores a **reference** to an outer class:
 
@@ -561,7 +561,7 @@ class A {
 }
 ```
 
-### Class delegation
+#### Class delegation
 
 ```kotlin
 interface Repository {
@@ -585,7 +585,7 @@ fun use(Controller: Controller) {
 
 ### Objects
 
-`object` in Kotlin is a **Singleton **
+`object` in Kotlin is a **Singleton**
 
 #### object expression
 
@@ -750,7 +750,7 @@ fun <T : Any> foo(list: List<T>) {
 foo(listOf(1, null)) // Error: element cannot be null because the inferred type Int? is not a subtype of Any
 ```
 
-#### Multiple constraints for a type parameter using `when`
+#### Multiple constraints for a type parameter using `where`
 ```kotlin
 fun <T> ensureTrailingPeriod(seq: T) where T : CharSequence, T : Appendable {
     if (!seq.endsWith('.')) {
@@ -768,9 +768,9 @@ fun List<Double>.average(): Double { ... }
 ```
 
 
+## Inline functions
 
-
-## Library functions looking like built-in constructs
+### Library functions looking like built-in constructs
 
 All these functions are declared as `inline` functions - no performance overhead when you use these, no anonymous class or extra objects are created for lambda under the hood:
 
@@ -784,7 +784,17 @@ All these functions are declared as `inline` functions - no performance overhead
 
 _Don't optimise prematurely!_
 
-## Collections
+
+### Comparison of `run`, `with`, `let`, `also` and `apply`
+
+// TODO
+
+- this vs. it
+- how to return
+
+## Collections vs. Sequences
+
+### Collections
 
 Extensions on collections are inlined:
 - `filter`
@@ -797,11 +807,11 @@ Operations on collections:
 - Lambdas are inlined (**no performance overhead**)
 - but **intermediate collections** are created for chained calls
 
-## Sequences
+### Sequences
 
 `asSequence()`
 
-## Collections vs Sequences
+### Collections vs Sequences
 
 | Operations on Collections                             | Operations on Sequences |
 | ----------------------------------------------------- | ----------------------- |
