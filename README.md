@@ -813,6 +813,8 @@ Operations on collections:
 
 - Lambdas are **NOT** inlined
 
+If the sequence operation returns another sequence, which is produced lazily, it's called `intermediate`, and otherwise the operation is `terminal`, e.g. `toList`, `max`.
+
 ### Collections vs Sequences
 
 | Operations on Collections                             | Operations on Sequences |
@@ -823,13 +825,361 @@ Operations on collections:
 
 ### Creating sequences
 
+```kotlin
+fun mySequence() = sequence {
+    println("yield one element")
+    yield(1)
+    println("yield a range")
+    yieldAll(3..5)
+    println("yield a list")
+    yieldAll(listOf(7,9))
+}
 
+println(mySequence()
+    .map { it * it }
+    .filter { it > 10 }
+    .take(1))
+    # fun <T> Sequence<T>.take(n: Int): Sequence<T>
+    # Returns a sequence containing first [n] elements
+    # take() is an intermediate operation
+    # So no "yield..." will be printed
 
-
+println(mySequence()
+    .map { it * it }
+    .filter { it > 10 }
+    .first())
+    # first() is a terminal operation and this will print:
+    # yield one element
+    # yield a range
+    # 16
+```
 
 ## Lambda with Receiver
 
+_If the curly braces **{ }** are colored in **bold**, they surround lambdas!_
+
+### `with` function
+
+```kotlin
+// repeat the variable name several times
+val sb = StringBuilder()
+sb.appendln("Alphabet: ")
+for (c in 'a'..'z') {
+    sb.append(c)
+}
+sb.toString()
+
+// using `with`
+val sb = StringBuilder()
+with (sb) { // the lambda is the second argument of with function
+    appendln("Alphabet: ") // this.appendln("Alphabet: ") `this` is an implicit receiver in the lambda (omitted in the syntax)
+    for (c in 'a'..'z') {
+        append(c)
+    }
+    toString()
+}
+```
+
+### Lambda vs. Lambda with receiver
+
+|                    |                      |
+| ------------------ | -------------------- |
+| regular function   | regular lambda       |
+| extension function | lambda with receiver |
+
+Inside the body of extension functions or lambda with receiver functions, `this` can be used as an implicit receiver and can be omitted.
+
+```kotlin
+// regular lambda
+val isEven: (Int) -> Boolean = { it % 2 == 0 }
+// lambda with receiver (put receiver type before dot and parameter types inside parenthesis)
+val isOdd: Int.() -> Boolean = { this % 2 == 1 }
+
+// calling regular lambda as regular function
+isEven(0)
+// calling lambda with receiver as extension function
+1.isOdd()
+```
+
+### `buildString` function
+
+```kotlin
+val s: String = buildString { // lambda with receiver
+    appendln("Alphabet: ")
+    for (c in 'a'..'z') {
+        append(c)
+    }
+}
+
+// Note this inlined, so no extra objects for storing lambda will be created
+inline fun buildString(
+    builderAction: StringBuilder.() -> Unit
+): String {
+    val stringBuilder = StringBuilder()
+    stringBuilder.builderAction()
+    return stringBuilder.toString()
+}
+```
+
+### `with` function declaration
+
+```kotlin
+inline fun <T, R> with(
+    receiver: T,
+    block: T.() -> R
+): R = receiver.block()
+```
+
+### More useful library functions
+
+```kotlin
+inline fun <T, R> with(receiver: T, block: T.() -> R): R = receiver.block()
+
+inline fun <T, R> T.run(block: T.() -> R): R = block()
+
+inline fun <T, R> T.let(block: (T) -> R): R = block(this)
+
+inline fun <T> T.apply(block: T.() -> Unit): T { block(); return this }
+
+inline fun <T> T.also(block: (T) -> Unit): T { block(this); return this }
+```
+
+```kotlin
+with (window) {
+    width = 300
+    height = 200
+    isVisible = true
+}
+
+// run: like with, but extension
+val windowOrNull = windowById["main"]
+windowOrNull?.run { // `run` can be used with safe access
+    width = 300
+    height = 200
+    isVisible = true
+}
+
+// apply: returns receiver as a result
+val mainWindow =
+    windowById["main"]?.apply {
+        width = 300
+        height = 200
+        isVisible = true
+    } ?: return // assign the variable only if the result is not null; otherwise, stop the execution and return from the outer function
+
+// also: regular argument instead of this
+windowById["main"]?.apply {
+    width = 300
+    height = 200
+    isVisible = true
+}?.also {
+    showWindow(it)
+}
+```
+
+
+|                             |          { .. this .. }           |           { .. it .. }            |
+| --------------------------- | :-------------------------------: | :-------------------------------: |
+| **return result of lambda** |          `with` / `run`           |               `let`               |
+| **return receiver**         |              `apply`              |              `also`               |
+|                             | receiver.apply { this.actions() } | receiver.also { moreActions(it) } |
+
+
+
 ## Types
+
+### Basic types
+
+In Kotlin, there's **NO** primitive types.
+
+But under the hood, there're still primitive types in the bytecode level:
+
+| Kotlin                        | Java                                                         |
+| ----------------------------- | ------------------------------------------------------------ |
+| `Int`, `Double`, `Boolean`    | `int`, `double`, `boolean`                                   |
+| `Int?`, `Double?`, `Boolean?` | `java.lang.Integer`, `java.lang.Double`, `java.lang.Boolean` |
+
+**Generic arguments:**
+
+When Int is used as a generic argument, it cannot be compiled to a primitive because you cannot use primitives as generic arguments. It becomes a reference type.
+
+| Kotlin                                                       | Java            |
+| ------------------------------------------------------------ | --------------- |
+| `List<Int>`                                                  | `List<Integer>` |
+| `Array<Int>`                                                 | `Integer[]`     |
+| `IntArray` (to get Arrays of primitive types under the hood) | `int[]`         |
+
+**String:**
+
+Kotlin doesn't have String implementation. It's replaced by `java.lang.String` under the hood.
+
+| Kotlin          | Java               |
+| --------------- | ------------------ |
+| `kotlin.String` | `java.lang.String` |
+
+But `kotlin.String` has some modifications which hide some confusing methods:
+
+```java
+// in Java
+"one.two.".replaceAll(".", "*") // get "********" because "." is treated as regex
+```
+
+```kotlin
+// in Kotlin
+"one.two.".replace(".", "*") // get "one*two*" as expected
+"one.two.".replace(".".toRegex(), "*") // get "********"
+```
+
+**Any:**
+
+`Any` in Kotlin is a super type of all non-nullable types (reference types and corresponding primitive types).
+
+| Kotlin | Java               |
+| ------ | ------------------ |
+| `Any`  | `java.lang.Object` |
+
+_Autoboxing under the hood_: Same as Java, when passing an integer as an argument to a function that expects any, it will be autoboxed to a reference type.
+
+```kotlin
+log(2017)
+
+fun log(any: Any) {
+    println("Value: $any")
+}
+
+// instead
+fun log(i: Int) {
+    println("Value: $i")
+}
+```
+
+**Function types:**
+
+Unless Kotlin lambdas are inlined, the Kotlin function types are replaced with regular interfaces with the corresponding generic arguments.
+
+| Kotlin            | Java                     |
+| ----------------- | ------------------------ |
+| () -> Boolean     | Function0<Boolean>       |
+| (Order) -> Int    | Function1<Order, Int>    |
+| (Int, Int) -> Int | Function2<Int, Int, Int> |
+
+```Kotlin
+package kotlin.jvm.functions
+
+interface Function0<out R> : Function<R> {
+    operator fun invoke(): R
+}
+
+interface Function1<in P1, out R> : Function<R> {
+    operator fun invoke(p1: P1): R
+}
+
+interface Function2<in P1, in P2, out R> : Function<R> {
+    operator fun invoke(p1: P1, p2: P2): R
+}
+```
+
+**Array comparison in Kotlin:**
+
+```kotlin
+val ints1 = intArrayOf(1, 2)
+val ints2 = intArrayOf(1, 2)
+println(ints1 == ints2) // false, == is calling equals() which is reference comparison
+println(ints1.contentEquals(ints2)) // true
+```
+
+**In Kotlin, prefer Lists to Arrays.**, array list has similar performance to array.
+
+### Kotlin type hierarchy
+
+- `Any` is the top type in Kotlin
+- `Nothing` is the bottom type in Kotlin
+
+```text
+        Any
+         |
+String ...  User ...
+         |
+       Nothing
+```
+
+| Kotlin  | Java |                                        |
+| ------- | ---- | -------------------------------------- |
+| Unit    | Void | No meaningful value is returned        |
+| Nothing | Void | Because there's no Nothing type in JVM |
+
+- `Unit`: a type that allows only _one_ value and thus can hold no information - the function completes successfully
+- `Nothing`: a type that has _no_ value - the function never completes
+
+```Kotlin
+fun fail(message: String): Nothing {
+    throw IllegalStateException(message)
+}
+
+fun infiniteLoop(): Nothing {
+    while(true) {}
+}
+```
+
+`Nothing` type expression examples:
+- `throw IllegalStateException()`
+- `return`
+- `TODO("Needs to be done")`
+
+
+### Nullable types
+
+Prevent Null Pointer Errors:
+
+1. Annotate Java types:
+   - `@Nullable Type` in Java -> `Type?` in Kotlin
+   - `@NotNull Type` in Java -> `Type` in Kotlin
+
+2. Specify types explicitly
+
+You can only annotate nullable types and set Non-null by default (supported by JSR-305): `@ParametersAreNonnullByDefault`, `@MyNonnullByDefault`.
+
+### Collection types
+
+`List` (Read-only) & `MutableList` are two interfaces declared in `kotlin.collections` package; `MutableList` extends `List`.
+
+`Read-only` $ \neq $ `immutable`:
+- Rea-only interface just lacks mutating methods;
+- The actual list can changed by another reference.
+
+```Kotlin
+// E.g.
+val mutableList = mutableListOf(1, 2, 3)
+val list: List<Int> = mutableList
+mutableList.add(4)
+println(list) // [1, 2, 3, 4]
+```
+
+Kotlin uses java.util.ArrayList under the hood:
+
+```text
+kotlin.List
+    |
+kotlin.MutableList
+    |
+java.util.ArrayList
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
