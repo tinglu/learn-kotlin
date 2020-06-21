@@ -1,58 +1,83 @@
 package rationals
 
+import java.lang.IllegalArgumentException
 import java.math.BigInteger
 
 data class Rational(val n: BigInteger, val d: BigInteger) : Comparable<Rational> {
     private val numerator: BigInteger
     private val denominator: BigInteger
 
+    // init {
+    //     when (d) {
+    //         0.toBigInteger() -> throw IllegalArgumentException("Denominator cannot be 0")
+    //         else -> {
+    //             val gcd = n.gcd(d)
+    //             if (d < 0.toBigInteger()) {
+    //                 numerator = -n / gcd
+    //                 denominator = -d / gcd
+    //             } else {
+    //                 numerator = n / gcd
+    //                 denominator = d / gcd
+    //             }
+    //         }
+    //     }
+    // }
+
     init {
-        when (d) {
-            0.toBigInteger() -> throw IllegalArgumentException("Denominator cannot be 0")
-            else -> {
-                val gcd = n.gcd(d)
-                if (d < 0.toBigInteger()) {
-                    numerator = -n / gcd
-                    denominator = -d / gcd
-                } else {
-                    numerator = n / gcd
-                    denominator = d / gcd
-                }
-            }
-        }
+        // require throws IllegalArgumentException if the condition isn't satisfied!
+        require(d != BigInteger.ZERO) { "Denominatore must be non-zero" }
+
+        val gcd = n.gcd(d)
+        val sign = d.signum().toBigInteger() // either 1 or -1 to ensure denominator is always positive!
+        numerator = n / gcd * sign
+        denominator = d / gcd * sign
     }
 
-    constructor(n: BigInteger) : this(n, 1.toBigInteger())
+    // constructor(n: BigInteger) : this(n, 1.toBigInteger())
+    constructor(n: BigInteger) : this(n, BigInteger.ONE)
 
     operator fun unaryMinus(): Rational =
-        Rational(-this.numerator, this.denominator)
+        Rational(-numerator, denominator)
 
     operator fun plus(other: Rational): Rational =
         Rational(
-            this.numerator * other.denominator + other.numerator * this.denominator,
-            this.denominator * other.denominator
+            numerator * other.denominator + other.numerator * denominator,
+            denominator * other.denominator
         )
 
     operator fun minus(other: Rational): Rational =
         Rational(
-            this.numerator * other.denominator - other.numerator * this.denominator,
-            this.denominator * other.denominator
+            numerator * other.denominator - other.numerator * denominator,
+            denominator * other.denominator
         )
 
     operator fun times(other: Rational): Rational =
-        Rational(this.numerator * other.numerator, this.denominator * other.denominator)
+        Rational(numerator * other.numerator, denominator * other.denominator)
 
     operator fun div(other: Rational): Rational =
-        Rational(this.numerator * other.denominator, this.denominator * other.numerator)
+        Rational(numerator * other.denominator, denominator * other.numerator)
 
-    override fun equals(other: Any?): Boolean =
-        when (other) {
-            is Rational -> this.numerator * other.denominator == other.numerator * this.denominator
-            else -> false
-        }
+    // override fun equals(other: Any?): Boolean =
+    //     when (other) {
+    //         is Rational -> numerator * other.denominator == other.numerator * denominator
+    //         else -> false
+    //     }
+
+    // Auto-generated
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Rational
+
+        if (numerator != other.numerator) return false
+        if (denominator != other.denominator) return false
+
+        return true
+    }
 
     override fun compareTo(other: Rational): Int =
-        (this.numerator * other.denominator).compareTo(other.numerator * this.denominator)
+        (numerator * other.denominator).compareTo(other.numerator * denominator)
 
     override fun toString(): String {
         if (denominator == 1.toBigInteger()) {
@@ -62,28 +87,40 @@ data class Rational(val n: BigInteger, val d: BigInteger) : Comparable<Rational>
         }
     }
 
+    // Auto-generated
     override fun hashCode(): Int {
-        var result = n.hashCode()
-        result = 31 * result + d.hashCode()
-        result = 31 * result + numerator.hashCode()
+        var result = numerator.hashCode()
         result = 31 * result + denominator.hashCode()
         return result
     }
 }
 
-infix fun Int.divBy(other: Int): Rational = Rational(this.toBigInteger(), other.toBigInteger())
+infix fun Int.divBy(other: Int): Rational = Rational(toBigInteger(), other.toBigInteger())
 
-infix fun Long.divBy(other: Long): Rational = Rational(this.toBigInteger(), other.toBigInteger())
+infix fun Long.divBy(other: Long): Rational = Rational(toBigInteger(), other.toBigInteger())
 
 infix fun BigInteger.divBy(other: BigInteger): Rational = Rational(this, other)
 
+// fun String.toRational(): Rational {
+//     val parts = split('/')
+//     return when (parts.size) {
+//         1 -> Rational(parts.elementAt(0).toBigInteger())
+//         2 -> Rational(parts.elementAt(0).toBigInteger(), parts.elementAt(1).toBigInteger())
+//         else -> throw IllegalArgumentException("Not a Rational number")
+//     }
+// }
 fun String.toRational(): Rational {
-    val parts = this.split('/')
-    return when (parts.size) {
-        1 -> Rational(parts.elementAt(0).toBigInteger())
-        2 -> Rational(parts.elementAt(0).toBigInteger(), parts.elementAt(1).toBigInteger())
-        else -> throw IllegalArgumentException("Not a Rational number")
+    // Move duplicated function into another extension function
+    fun String.toBigIntegerOrFail() =
+        toBigIntegerOrNull()
+            ?: throw IllegalArgumentException("Expecting rational in the form of 'n/d' or 'n', was '$this'")
+
+    if (!contains("/")) {
+        val number = toBigIntegerOrFail()
+        return Rational(number)
     }
+    val parts = split("/")
+    return Rational(parts[0].toBigIntegerOrFail(), parts[1].toBigIntegerOrFail())
 }
 
 fun main() {
