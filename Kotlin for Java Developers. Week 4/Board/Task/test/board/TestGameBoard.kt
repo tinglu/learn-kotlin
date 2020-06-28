@@ -65,10 +65,12 @@ class TestGameBoard {
         gameBoard[1, 1] = 'a'
         val first = gameBoard.find { it == 'a' }
         val second = gameBoard.getCell(1, 1)
-        Assert.assertTrue("'find' shouldn't recreate the 'Cell' instances.\n" +
-                "Create only 'width * width' cells; all the functions working with cells\n" +
-                "should return existing cells instead of creating new ones.",
-                first === second)
+        Assert.assertTrue(
+            "'find' shouldn't recreate the 'Cell' instances.\n" +
+                    "Create only 'width * width' cells; all the functions working with cells\n" +
+                    "should return existing cells instead of creating new ones.",
+            first === second
+        )
     }
 
     @Test
@@ -78,10 +80,12 @@ class TestGameBoard {
         val cells = gameBoard.filter { it == 'a' }
         val first = cells.first()
         val second = gameBoard.getCell(1, 1)
-        Assert.assertTrue("'filter' shouldn't recreate the 'Cell' instances.\n" +
-                "Create only 'width * width' cells; all the functions working with cells\n" +
-                "should return existing cells instead of creating new ones.",
-                first === second)
+        Assert.assertTrue(
+            "'filter' shouldn't recreate the 'Cell' instances.\n" +
+                    "Create only 'width * width' cells; all the functions working with cells\n" +
+                    "should return existing cells instead of creating new ones.",
+            first === second
+        )
     }
 
     @Test
@@ -124,11 +128,11 @@ class TestGameBoard {
     }
 
     private fun <T> GameBoard<T>.asString() =
-            (1..width).joinToString("\n") { i ->
-                (1..width).joinToString(" ") { j ->
-                    "${get(i, j) ?: "-"}"
-                }
+        (1..width).joinToString("\n") { i ->
+            (1..width).joinToString(" ") { j ->
+                "${get(i, j) ?: "-"}"
             }
+        }
 
     private fun testAllAny(gameBoard: GameBoard<Int>) {
         val allNonZero = gameBoard.all { it != 0 }

@@ -49,22 +49,22 @@ files:
   visible: true
   placeholders:
   - offset: 90
-    length: 6
+    length: 22
     placeholder_text: TODO()
     initial_state:
       length: 6
       offset: 90
     initialized_from_dependency: false
-    selected: false
+    selected: true
     status: Unchecked
-  - offset: 149
-    length: 6
+  - offset: 165
+    length: 20
     placeholder_text: TODO()
     initial_state:
       length: 6
       offset: 149
     initialized_from_dependency: false
-    selected: false
+    selected: true
     status: Unchecked
   text: |+
     package board
